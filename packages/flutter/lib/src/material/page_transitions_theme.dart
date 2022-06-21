@@ -542,7 +542,7 @@ class CupertinoPageTransitionsBuilder extends PageTransitionsBuilder {
 /// Defines the page transition animations used by [MaterialPageRoute]
 /// for different [TargetPlatform]s.
 ///
-/// The [MaterialPageRoute.buildTransitions] method looks up the current
+/// The [MaterialPageRoute.buildTransitions] method looks up the
 /// current [PageTransitionsTheme] with `Theme.of(context).pageTransitionsTheme`
 /// and delegates to [buildTransitions].
 ///
