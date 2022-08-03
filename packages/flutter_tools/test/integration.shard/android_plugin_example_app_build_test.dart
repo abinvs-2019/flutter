@@ -4,6 +4,7 @@
 
 import 'package:file_testing/file_testing.dart';
 import 'package:flutter_tools/src/base/file_system.dart';
+import 'package:flutter_tools/src/base/io.dart';
 
 import '../src/common.dart';
 import 'test_utils.dart';
@@ -35,7 +36,7 @@ void main() {
 
     final String testName = '${template}_test';
 
-    processManager.runSync(<String>[
+    ProcessResult result = processManager.runSync(<String>[
       flutterBin,
       ...getLocalEngineArguments(),
       'create',
@@ -43,6 +44,9 @@ void main() {
       '--platforms=android',
       testName,
     ], workingDirectory: tempDir.path);
+    if (result.exitCode != 0) {
+      throw Exception('flutter create failed: ${result.exitCode}\n${result.stderr}\n${result.stdout}');
+    }
 
     final Directory exampleAppDir =
         tempDir.childDirectory(testName).childDirectory('example');
@@ -54,19 +58,22 @@ void main() {
     final RegExp androidPluginRegExp =
         RegExp(r'com\.android\.tools\.build:gradle:(\d+\.\d+\.\d+)');
 
-    // Use AGP 4.1.0
+    // Use AGP 7.2.0
     final String newBuildGradle = buildGradle.replaceAll(
-        androidPluginRegExp, 'com.android.tools.build:gradle:4.1.0');
+        androidPluginRegExp, 'com.android.tools.build:gradle:7.2.0');
     buildGradleFile.writeAsStringSync(newBuildGradle);
 
-    // Run flutter build apk using AGP 4.1.0
-    processManager.runSync(<String>[
+    // Run flutter build apk using AGP 7.2.0
+    result = processManager.runSync(<String>[
       flutterBin,
       ...getLocalEngineArguments(),
       'build',
       'apk',
       '--target-platform=android-arm',
     ], workingDirectory: exampleAppDir.path);
+    if (result.exitCode != 0) {
+      throw Exception('flutter build failed: ${result.exitCode}\n${result.stderr}\n${result.stdout}');
+    }
 
     final File exampleApk = fileSystem.file(fileSystem.path.join(
       exampleAppDir.path,
@@ -84,11 +91,14 @@ void main() {
     }
 
     // Clean
-    processManager.runSync(<String>[
+    result = processManager.runSync(<String>[
       flutterBin,
       ...getLocalEngineArguments(),
       'clean',
     ], workingDirectory: exampleAppDir.path);
+    if (result.exitCode != 0) {
+      throw Exception('flutter clean failed: ${result.exitCode}\n${result.stderr}\n${result.stdout}');
+    }
 
     // Remove Gradle wrapper
     fileSystem
@@ -108,13 +118,16 @@ android.enableJetifier=true
 android.enableR8=true''');
 
     // Run flutter build apk using AGP 3.3.0
-    processManager.runSync(<String>[
+    result = processManager.runSync(<String>[
       flutterBin,
       ...getLocalEngineArguments(),
       'build',
       'apk',
       '--target-platform=android-arm',
     ], workingDirectory: exampleAppDir.path);
+    if (result.exitCode != 0) {
+      throw Exception('flutter build failed: ${result.exitCode}\n${result.stderr}\n${result.stdout}');
+    }
     expect(exampleApk, exists);
   }
 

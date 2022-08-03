@@ -95,7 +95,7 @@ const List<Category> allCategories = <Category>[
 ];
 
 class CategoryView extends StatelessWidget {
-  const CategoryView({ Key? key, this.category }) : super(key: key);
+  const CategoryView({ super.key, this.category });
 
   final Category? category;
 
@@ -104,6 +104,7 @@ class CategoryView extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     return Scrollbar(
       child: ListView(
+        primary: true,
         key: PageStorageKey<Category?>(category),
         padding: const EdgeInsets.symmetric(
           vertical: 16.0,
@@ -149,13 +150,13 @@ class CategoryView extends StatelessWidget {
 // BackdropDemo.
 class BackdropPanel extends StatelessWidget {
   const BackdropPanel({
-    Key? key,
+    super.key,
     this.onTap,
     this.onVerticalDragUpdate,
     this.onVerticalDragEnd,
     this.title,
     this.child,
-  }) : super(key: key);
+  });
 
   final VoidCallback? onTap;
   final GestureDragUpdateCallback? onVerticalDragUpdate;
@@ -204,9 +205,9 @@ class BackdropPanel extends StatelessWidget {
 // Cross fades between 'Select a Category' and 'Asset Viewer'.
 class BackdropTitle extends AnimatedWidget {
   const BackdropTitle({
-    Key? key,
-    required Animation<double> listenable,
-  }) : super(key: key, listenable: listenable);
+    super.key,
+    required Animation<double> super.listenable,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -239,7 +240,7 @@ class BackdropTitle extends AnimatedWidget {
 
 // This widget is essentially the backdrop itself.
 class BackdropDemo extends StatefulWidget {
-  const BackdropDemo({Key? key}) : super(key: key);
+  const BackdropDemo({super.key});
 
   static const String routeName = '/material/backdrop';
 
@@ -293,23 +294,26 @@ class _BackdropDemoState extends State<BackdropDemo> with SingleTickerProviderSt
   // the user must either tap its heading or the backdrop's menu icon.
 
   void _handleDragUpdate(DragUpdateDetails details) {
-    if (_controller.isAnimating || _controller.status == AnimationStatus.completed)
+    if (_controller.isAnimating || _controller.status == AnimationStatus.completed) {
       return;
+    }
 
     _controller.value -= details.primaryDelta! / _backdropHeight;
   }
 
   void _handleDragEnd(DragEndDetails details) {
-    if (_controller.isAnimating || _controller.status == AnimationStatus.completed)
+    if (_controller.isAnimating || _controller.status == AnimationStatus.completed) {
       return;
+    }
 
     final double flingVelocity = details.velocity.pixelsPerSecond.dy / _backdropHeight;
-    if (flingVelocity < 0.0)
+    if (flingVelocity < 0.0) {
       _controller.fling(velocity: math.max(2.0, -flingVelocity));
-    else if (flingVelocity > 0.0)
+    } else if (flingVelocity > 0.0) {
       _controller.fling(velocity: math.min(-2.0, -flingVelocity));
-    else
+    } else {
       _controller.fling(velocity: _controller.value < 0.5 ? -2.0 : 2.0);
+    }
   }
 
   // Stacks a BackdropPanel, which displays the selected category, on top

@@ -4,16 +4,16 @@
 
 import 'basic.dart';
 import 'framework.dart';
-import 'navigator.dart';
 import 'routes.dart';
 
 /// A modal route that replaces the entire screen.
 abstract class PageRoute<T> extends ModalRoute<T> {
   /// Creates a modal route that replaces the entire screen.
   PageRoute({
-    RouteSettings? settings,
+    super.settings,
     this.fullscreenDialog = false,
-  }) : super(settings: settings);
+    this.preferRasterization = true,
+  });
 
   /// {@template flutter.widgets.PageRoute.fullscreenDialog}
   /// Whether this page route is a full-screen dialog.
@@ -24,6 +24,9 @@ abstract class PageRoute<T> extends ModalRoute<T> {
   /// with the back swipe gesture.
   /// {@endtemplate}
   final bool fullscreenDialog;
+
+  @override
+  final bool preferRasterization;
 
   @override
   bool get opaque => true;
@@ -52,7 +55,7 @@ class PageRouteBuilder<T> extends PageRoute<T> {
   /// The [pageBuilder], [transitionsBuilder], [opaque], [barrierDismissible],
   /// [maintainState], and [fullscreenDialog] arguments must not be null.
   PageRouteBuilder({
-    RouteSettings? settings,
+    super.settings,
     required this.pageBuilder,
     this.transitionsBuilder = _defaultTransitionsBuilder,
     this.transitionDuration = const Duration(milliseconds: 300),
@@ -62,14 +65,14 @@ class PageRouteBuilder<T> extends PageRoute<T> {
     this.barrierColor,
     this.barrierLabel,
     this.maintainState = true,
-    bool fullscreenDialog = false,
+    super.fullscreenDialog,
+    super.preferRasterization = true,
   }) : assert(pageBuilder != null),
        assert(transitionsBuilder != null),
        assert(opaque != null),
        assert(barrierDismissible != null),
        assert(maintainState != null),
-       assert(fullscreenDialog != null),
-       super(settings: settings, fullscreenDialog: fullscreenDialog);
+       assert(fullscreenDialog != null);
 
   /// {@template flutter.widgets.pageRouteBuilder.pageBuilder}
   /// Used build the route's primary contents.

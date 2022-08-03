@@ -57,8 +57,9 @@ class GalleryOptions {
 
   @override
   bool operator ==(Object other) {
-    if (other.runtimeType != runtimeType)
+    if (other.runtimeType != runtimeType) {
       return false;
+    }
     return other is GalleryOptions
         && other.themeMode == themeMode
         && other.textScaleFactor == textScaleFactor
@@ -71,7 +72,7 @@ class GalleryOptions {
   }
 
   @override
-  int get hashCode => hashValues(
+  int get hashCode => Object.hash(
     themeMode,
     textScaleFactor,
     visualDensity,
@@ -93,7 +94,7 @@ const double _kItemHeight = 48.0;
 const EdgeInsetsDirectional _kItemPadding = EdgeInsetsDirectional.only(start: 56.0);
 
 class _OptionsItem extends StatelessWidget {
-  const _OptionsItem({ Key? key, this.child }) : super(key: key);
+  const _OptionsItem({ this.child });
 
   final Widget? child;
 
@@ -167,7 +168,7 @@ class _ActionItem extends StatelessWidget {
 }
 
 class _TextButton extends StatelessWidget {
-  const _TextButton({ Key? key, this.onPressed, this.child }) : super(key: key);
+  const _TextButton({ this.onPressed, this.child });
 
   final VoidCallback? onPressed;
   final Widget? child;
@@ -177,7 +178,7 @@ class _TextButton extends StatelessWidget {
     final ThemeData theme = Theme.of(context);
     return TextButton(
       style: TextButton.styleFrom(
-        primary: theme.colorScheme.onPrimary,
+        foregroundColor: theme.colorScheme.onPrimary,
         textStyle: theme.textTheme.subtitle1,
         padding: EdgeInsets.zero,
       ),
@@ -467,11 +468,11 @@ class _PlatformItem extends StatelessWidget {
 
 class GalleryOptionsPage extends StatelessWidget {
   const GalleryOptionsPage({
-    Key? key,
+    super.key,
     this.options,
     this.onOptionsChanged,
     this.onSendFeedback,
-  }) : super(key: key);
+  });
 
   final GalleryOptions? options;
   final ValueChanged<GalleryOptions>? onOptionsChanged;
@@ -480,8 +481,9 @@ class GalleryOptionsPage extends StatelessWidget {
   List<Widget> _enabledDiagnosticItems() {
     // Boolean showFoo options with a value of null: don't display
     // the showFoo option at all.
-    if (options == null)
+    if (options == null) {
       return const <Widget>[];
+    }
 
     return <Widget>[
       const Divider(),

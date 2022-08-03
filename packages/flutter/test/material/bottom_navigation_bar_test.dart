@@ -1209,7 +1209,7 @@ void main() {
 
     expect(find.text('B'), findsOneWidget);
     await tester.longPress(find.text('B'));
-    expect(find.byTooltip('B'), findsOneWidget);
+    expect(find.byTooltip('B'), findsNothing);
 
     expect(find.text('C'), findsOneWidget);
     await tester.longPress(find.text('C'));
@@ -1560,8 +1560,9 @@ void main() {
     final Finder backgroundMaterial = find.descendant(
       of: find.byType(BottomNavigationBar),
       matching: find.byWidgetPredicate((Widget w) {
-        if (w is Material)
+        if (w is Material) {
           return w.type == MaterialType.canvas;
+        }
         return false;
       }),
     );
@@ -1828,11 +1829,10 @@ void main() {
 
     final TestGesture gesture = await tester.createGesture(kind: PointerDeviceKind.mouse, pointer: 1);
     await gesture.addPointer(location: tester.getCenter(find.text('AC')));
-    addTearDown(gesture.removePointer);
 
     await tester.pumpAndSettle();
 
-    expect(RendererBinding.instance!.mouseTracker.debugDeviceActiveCursor(1), SystemMouseCursors.text);
+    expect(RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1), SystemMouseCursors.text);
 
     // Test default cursor
     await tester.pumpWidget(
@@ -1851,7 +1851,7 @@ void main() {
       ),
     );
 
-    expect(RendererBinding.instance!.mouseTracker.debugDeviceActiveCursor(1), SystemMouseCursors.click);
+    expect(RendererBinding.instance.mouseTracker.debugDeviceActiveCursor(1), SystemMouseCursors.click);
   });
 
   group('feedback', () {

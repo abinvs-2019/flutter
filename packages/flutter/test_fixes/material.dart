@@ -30,7 +30,7 @@ void main() {
   element.rootAncestorStateOfType(TypeMatcher<targetType>());
   element.ancestorRenderObjectOfType(TypeMatcher<targetType>());
 
-  // Changes made in https://github.com/flutter/flutter/pull/45941
+  // Changes made in https://github.com/flutter/flutter/pull/45941 and https://github.com/flutter/flutter/pull/83843
   final WidgetsBinding binding = WidgetsBinding.instance!;
   binding.deferFirstFrameReport();
   binding.allowFirstFrameReport();
@@ -551,4 +551,38 @@ void main() {
   rawChip = RawChip(useDeleteButtonTooltip: true);
   rawChip = RawChip(useDeleteButtonTooltip: false, deleteButtonTooltipMessage: 'Delete Tooltip');
   rawChip.useDeleteButtonTooltip;
+
+  // Change made in https://github.com/flutter/flutter/pull/100381
+  TextSelectionOverlay.fadeDuration;
+
+  // Changes made in https://github.com/flutter/flutter/pull/105291
+  ButtonStyle elevationButtonStyle = ElevatedButton.styleFrom(
+    primary: Colors.blue,
+    onPrimary: Colors.white,
+    onSurface: Colors.grey,
+  );
+  ButtonStyle outlinedButtonStyle = OutlinedButton.styleFrom(
+    primary: Colors.blue,
+    onSurface: Colors.grey,
+  );
+  ButtonStyle textButtonStyle = TextButton.styleFrom(
+    primary: Colors.blue,
+    onSurface: Colors.grey,
+  );
+
+  // Changes made in https://github.com/flutter/flutter/pull/97972
+  ThemeData themeData = ThemeData();
+  themeData = ThemeData(toggleableActiveColor: Colors.black);
+  themeData = ThemeData(
+    toggleableActiveColor: Colors.black,
+  );
+  themeData = ThemeData.raw(toggleableActiveColor: Colors.black);
+  themeData = ThemeData.raw(
+    toggleableActiveColor: Colors.black,
+  );
+  themeData = themeData.copyWith(toggleableActiveColor: Colors.black);
+  themeData = themeData.copyWith(
+    toggleableActiveColor: Colors.black,
+  );
+  themeData.toggleableActiveColor; // Removing field reference not supported.
 }

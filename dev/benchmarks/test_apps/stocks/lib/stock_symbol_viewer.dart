@@ -21,8 +21,9 @@ class _StockSymbolView extends StatelessWidget {
     assert(stock != null);
     final String lastSale = '\$${stock.lastSale.toStringAsFixed(2)}';
     String changeInPrice = '${stock.percentChange.toStringAsFixed(2)}%';
-    if (stock.percentChange > 0)
+    if (stock.percentChange > 0) {
       changeInPrice = '+$changeInPrice';
+    }
 
     final TextStyle headings = Theme.of(context).textTheme.bodyText1!;
     return Container(
@@ -69,10 +70,10 @@ class _StockSymbolView extends StatelessWidget {
 
 class StockSymbolPage extends StatelessWidget {
   const StockSymbolPage({
-    Key? key,
+    super.key,
     required this.symbol,
     required this.stocks,
-  }) : super(key: key);
+  });
 
   final String symbol;
   final StockData stocks;
@@ -121,9 +122,9 @@ class StockSymbolPage extends StatelessWidget {
 
 class StockSymbolBottomSheet extends StatelessWidget {
   const StockSymbolBottomSheet({
-    Key? key,
+    super.key,
     required this.stock,
-  }) : super(key: key);
+  });
 
   final Stock stock;
 

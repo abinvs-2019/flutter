@@ -9,12 +9,14 @@ import '../../base/io.dart';
 import '../../base/process.dart';
 import '../../build_info.dart';
 import '../../globals.dart' as globals show xcode;
+import '../../reporting/reporting.dart';
 import '../build_system.dart';
 import '../depfile.dart';
 import '../exceptions.dart';
 import 'assets.dart';
 import 'common.dart';
 import 'icon_tree_shaker.dart';
+import 'shader_compiler.dart';
 
 /// Copy the macOS framework to the correct copy dir by invoking 'rsync'.
 ///
@@ -80,7 +82,7 @@ abstract class UnpackMacOS extends Target {
   }
 
   void _thinFramework(Environment environment, String frameworkBinaryPath) {
-    final String archs = environment.defines[kDarwinArchs] ?? 'x86_64';
+    final String archs = environment.defines[kDarwinArchs] ?? 'x86_64 arm64';
     final List<String> archList = archs.split(' ').toList();
     final ProcessResult infoResult = environment.processManager.runSync(<String>[
       'lipo',
@@ -93,7 +95,7 @@ abstract class UnpackMacOS extends Target {
       'lipo',
       frameworkBinaryPath,
       '-verify_arch',
-      ...archList
+      ...archList,
     ]);
 
     if (verifyResult.exitCode != 0) {
@@ -186,7 +188,7 @@ class DebugMacOSFramework extends Target {
     final Iterable<DarwinArch> darwinArchs = environment.defines[kDarwinArchs]
       ?.split(' ')
       .map(getDarwinArchForName)
-      ?? <DarwinArch>[DarwinArch.x86_64];
+      ?? <DarwinArch>[DarwinArch.x86_64, DarwinArch.arm64];
 
     final Iterable<String> darwinArchArguments =
         darwinArchs.expand((DarwinArch arch) => <String>['-arch', getNameForDarwinArch(arch)]);
@@ -256,7 +258,7 @@ class CompileMacOSFramework extends Target {
       ?.split(' ')
       .map(getDarwinArchForName)
       .toList()
-      ?? <DarwinArch>[DarwinArch.x86_64];
+      ?? <DarwinArch>[DarwinArch.x86_64, DarwinArch.arm64];
     if (targetPlatform != TargetPlatform.darwin) {
       throw Exception('compile_macos_framework is only supported for darwin TargetPlatform.');
     }
@@ -390,6 +392,7 @@ abstract class MacOSBundleFlutterAssets extends Target {
       environment,
       assetDirectory,
       targetPlatform: TargetPlatform.darwin,
+      shaderTarget: ShaderTarget.sksl,
     );
     final DepfileService depfileService = DepfileService(
       fileSystem: environment.fileSystem,
@@ -542,4 +545,27 @@ class ReleaseMacOSBundleFlutterAssets extends MacOSBundleFlutterAssets {
     CompileMacOSFramework(),
     ReleaseUnpackMacOS(),
   ];
+
+  @override
+  Future<void> build(Environment environment) async {
+    bool buildSuccess = true;
+    try {
+      await super.build(environment);
+    } catch (_) {  // ignore: avoid_catches_without_on_clauses
+      buildSuccess = false;
+      rethrow;
+    } finally {
+      // Send a usage event when the app is being archived from Xcode.
+      if (environment.defines[kXcodeAction]?.toLowerCase() == 'install') {
+        environment.logger.printTrace('Sending archive event if usage enabled.');
+        UsageEvent(
+          'assemble',
+          'macos-archive',
+          label: buildSuccess ? 'success' : 'fail',
+          flutterUsage: environment.usage,
+        ).send();
+      }
+    }
+  }
+
 }

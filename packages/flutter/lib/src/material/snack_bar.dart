@@ -82,14 +82,13 @@ class SnackBarAction extends StatefulWidget {
   ///
   /// The [label] and [onPressed] arguments must be non-null.
   const SnackBarAction({
-    Key? key,
+    super.key,
     this.textColor,
     this.disabledTextColor,
     required this.label,
     required this.onPressed,
   }) : assert(label != null),
-       assert(onPressed != null),
-       super(key: key);
+       assert(onPressed != null);
 
   /// The button label color. If not provided, defaults to
   /// [SnackBarThemeData.actionTextColor].
@@ -116,21 +115,23 @@ class _SnackBarActionState extends State<SnackBarAction> {
   bool _haveTriggeredAction = false;
 
   void _handlePressed() {
-    if (_haveTriggeredAction)
+    if (_haveTriggeredAction) {
       return;
+    }
     setState(() {
       _haveTriggeredAction = true;
     });
     widget.onPressed();
-    Scaffold.of(context).hideCurrentSnackBar(reason: SnackBarClosedReason.action);
+    ScaffoldMessenger.of(context).hideCurrentSnackBar(reason: SnackBarClosedReason.action);
   }
 
   @override
   Widget build(BuildContext context) {
     Color? resolveForegroundColor(Set<MaterialState> states) {
       final SnackBarThemeData snackBarTheme = Theme.of(context).snackBarTheme;
-      if (states.contains(MaterialState.disabled))
+      if (states.contains(MaterialState.disabled)) {
         return widget.disabledTextColor ?? snackBarTheme.disabledActionTextColor;
+      }
       return widget.textColor ?? snackBarTheme.actionTextColor;
     }
 
@@ -156,6 +157,13 @@ class _SnackBarActionState extends State<SnackBarAction> {
 ///
 /// A SnackBar with an action will not time out when TalkBack or VoiceOver are
 /// enabled. This is controlled by [AccessibilityFeatures.accessibleNavigation].
+///
+/// During page transitions, the [SnackBar] will smoothly animate to its
+/// location on the other page. For example if the [SnackBar.behavior] is set to
+/// [SnackBarBehavior.floating] and the next page has a floating action button,
+/// while the current one does not, the [SnackBar] will smoothly animate above
+/// the floating action button. It also works in the case of a back gesture
+/// transition.
 ///
 /// {@tool dartpad}
 /// Here is an example of a [SnackBar] with an [action] button implemented using
@@ -190,7 +198,7 @@ class SnackBar extends StatefulWidget {
   /// The [content] argument must be non-null. The [elevation] must be null or
   /// non-negative.
   const SnackBar({
-    Key? key,
+    super.key,
     required this.content,
     this.backgroundColor,
     this.elevation,
@@ -204,6 +212,7 @@ class SnackBar extends StatefulWidget {
     this.animation,
     this.onVisible,
     this.dismissDirection = DismissDirection.down,
+    this.clipBehavior = Clip.hardEdge,
   }) : assert(elevation == null || elevation >= 0.0),
        assert(content != null),
        assert(
@@ -211,7 +220,7 @@ class SnackBar extends StatefulWidget {
          'Width and margin can not be used together',
        ),
        assert(duration != null),
-       super(key: key);
+       assert(clipBehavior != null);
 
   /// The primary content of the snack bar.
   ///
@@ -336,6 +345,11 @@ class SnackBar extends StatefulWidget {
   /// Cannot be null, defaults to [DismissDirection.down].
   final DismissDirection dismissDirection;
 
+  /// {@macro flutter.material.Material.clipBehavior}
+  ///
+  /// Defaults to [Clip.hardEdge], and must not be null.
+  final Clip clipBehavior;
+
   // API for ScaffoldMessengerState.showSnackBar():
 
   /// Creates an animation controller useful for driving a snack bar's entrance and exit animation.
@@ -367,6 +381,7 @@ class SnackBar extends StatefulWidget {
       animation: newAnimation,
       onVisible: onVisible,
       dismissDirection: dismissDirection,
+      clipBehavior: clipBehavior,
     );
   }
 
@@ -503,7 +518,7 @@ class _SnackBarState extends State<SnackBar> {
               child: TextButtonTheme(
                 data: TextButtonThemeData(
                   style: TextButton.styleFrom(
-                    primary: buttonColor,
+                    foregroundColor: buttonColor,
                     padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
                   ),
                 ),
@@ -575,14 +590,14 @@ class _SnackBarState extends State<SnackBar> {
       container: true,
       liveRegion: true,
       onDismiss: () {
-        Scaffold.of(context).removeCurrentSnackBar(reason: SnackBarClosedReason.dismiss);
+        ScaffoldMessenger.of(context).removeCurrentSnackBar(reason: SnackBarClosedReason.dismiss);
       },
       child: Dismissible(
         key: const Key('dismissible'),
         direction: widget.dismissDirection,
         resizeDuration: null,
         onDismissed: (DismissDirection direction) {
-          Scaffold.of(context).removeCurrentSnackBar(reason: SnackBarClosedReason.swipe);
+          ScaffoldMessenger.of(context).removeCurrentSnackBar(reason: SnackBarClosedReason.swipe);
         },
         child: snackBar,
       ),
@@ -612,7 +627,11 @@ class _SnackBarState extends State<SnackBar> {
 
     return Hero(
       tag: '<SnackBar Hero tag - ${widget.content}>',
-      child: snackBarTransition,
+      transitionOnUserGestures: true,
+      child: ClipRect(
+        clipBehavior: widget.clipBehavior,
+        child: snackBarTransition,
+      ),
     );
   }
 }
