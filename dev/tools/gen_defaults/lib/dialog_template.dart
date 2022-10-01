@@ -31,7 +31,10 @@ class _${blockName}DefaultsM3 extends DialogTheme {
   Color? get backgroundColor => ${componentColor("md.comp.dialog.container")};
 
   @override
-  Color? get surfaceTintColor => ${componentColor("md.comp.dialog.container.surface-tint-layer")};
+  Color? get shadowColor => ${colorOrTransparent("md.comp.dialog.container.shadow-color")};
+
+  @override
+  Color? get surfaceTintColor => ${colorOrTransparent("md.comp.dialog.container.surface-tint-layer.color")};
 
   @override
   TextStyle? get titleTextStyle => ${textStyle("md.comp.dialog.headline")};
@@ -41,6 +44,22 @@ class _${blockName}DefaultsM3 extends DialogTheme {
 
   @override
   EdgeInsetsGeometry? get actionsPadding => const EdgeInsets.only(left: 24.0, right: 24.0, bottom: 24.0);
+}
+''';
+}
+
+class DialogFullscreenTemplate extends TokenTemplate {
+  const DialogFullscreenTemplate(super.blockName, super.fileName, super.tokens);
+
+  @override
+  String generate() => '''
+class _${blockName}DefaultsM3 extends DialogTheme {
+  const _${blockName}DefaultsM3(this.context);
+
+  final BuildContext context;
+
+  @override
+  Color? get backgroundColor => ${componentColor("md.comp.full-screen-dialog.container")};
 }
 ''';
 }

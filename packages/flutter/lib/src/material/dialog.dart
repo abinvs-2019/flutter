@@ -31,6 +31,12 @@ const EdgeInsets _defaultInsetPadding = EdgeInsets.symmetric(horizontal: 40.0, v
 /// or [SimpleDialog], which implement specific kinds of Material Design
 /// dialogs.
 ///
+/// {@tool dartpad}
+/// This sample shows the creation of [Dialog] and [Dialog.fullscreen] widgets.
+///
+/// ** See code in examples/api/lib/material/dialog/dialog.0.dart **
+/// {@end-tool}
+///
 /// See also:
 ///
 ///  * [AlertDialog], for dialogs that have a message and some buttons.
@@ -55,7 +61,26 @@ class Dialog extends StatelessWidget {
     this.alignment,
     this.child,
   }) : assert(clipBehavior != null),
-       assert(elevation == null || elevation >= 0.0);
+       assert(elevation == null || elevation >= 0.0),
+       _fullscreen = false;
+
+  /// Creates a fullscreen dialog.
+  ///
+  /// Typically used in conjunction with [showDialog].
+  const Dialog.fullscreen({
+    super.key,
+    this.backgroundColor,
+    this.insetAnimationDuration = Duration.zero,
+    this.insetAnimationCurve = Curves.decelerate,
+    this.child,
+  }) : elevation = 0,
+       shadowColor = null,
+       surfaceTintColor = null,
+       insetPadding = EdgeInsets.zero,
+       clipBehavior = Clip.none,
+       shape = null,
+       alignment = null,
+       _fullscreen = true;
 
   /// {@template flutter.material.dialog.backgroundColor}
   /// The background color of the surface of this [Dialog].
@@ -89,15 +114,20 @@ class Dialog extends StatelessWidget {
   final double? elevation;
 
   /// {@template flutter.material.dialog.shadowColor}
-  /// The color to paint the [elevation] shadow under the dialog's [Material].
+  /// The color used to paint a drop shadow under the dialog's [Material],
+  /// which reflects the dialog's [elevation].
   ///
-  /// If null then no drop shadow will be painted.
+  /// If null and [ThemeData.useMaterial3] is true then no drop shadow will
+  /// be rendered.
+  ///
+  /// If null and [ThemeData.useMaterial3] is false then it will default to
+  /// [ThemeData.shadowColor].
   ///
   /// See also:
   ///   * [Material.shadowColor], which describes how the drop shadow is painted.
-  ///   * [elevation], effects how the drop shadow is painted.
-  ///   * [surfaceTintColor], if non-null will also provide a surface tint
-  ///     overlay on the background color to indicate elevation.
+  ///   * [elevation], which affects how the drop shadow is painted.
+  ///   * [surfaceTintColor], which can be used to indicate elevation through
+  ///     tinting the background color.
   /// {@endtemplate}
   final Color? shadowColor;
 
@@ -105,14 +135,19 @@ class Dialog extends StatelessWidget {
   /// The color used as a surface tint overlay on the dialog's background color,
   /// which reflects the dialog's [elevation].
   ///
-  /// If null then no surface tint will be applied.
+  /// If [ThemeData.useMaterial3] is false property has no effect.
+  ///
+  /// If null and [ThemeData.useMaterial3] is true then [ThemeData]'s
+  /// [ColorScheme.surfaceTint] will be used.
+  ///
+  /// To disable this feature, set [surfaceTintColor] to [Colors.transparent].
   ///
   /// See also:
   ///   * [Material.surfaceTintColor], which describes how the surface tint will
   ///     be applied to the background color of the dialog.
-  ///   * [elevation], effects the opacity of the surface tint.
-  ///   * [shadowColor], if non-null will also provide a drop shadow to
-  ///     indicate elevation.
+  ///   * [elevation], which affects the opacity of the surface tint.
+  ///   * [shadowColor], which can be used to indicate elevation through
+  ///     a drop shadow.
   /// {@endtemplate}
   final Color? surfaceTintColor;
 
@@ -120,7 +155,8 @@ class Dialog extends StatelessWidget {
   /// The duration of the animation to show when the system keyboard intrudes
   /// into the space that the dialog is placed in.
   ///
-  /// Defaults to 100 milliseconds.
+  /// Defaults to 100 milliseconds when [Dialog] is used, and [Duration.zero]
+  /// when [Dialog.fullscreen] is used.
   /// {@endtemplate}
   final Duration insetAnimationDuration;
 
@@ -174,13 +210,44 @@ class Dialog extends StatelessWidget {
   /// {@macro flutter.widgets.ProxyWidget.child}
   final Widget? child;
 
+  /// This value is used to determine if this is a fullscreen dialog.
+  final bool _fullscreen;
+
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     final DialogTheme dialogTheme = DialogTheme.of(context);
-    final DialogTheme defaults = theme.useMaterial3 ? _DialogDefaultsM3(context) : _DialogDefaultsM2(context);
-
     final EdgeInsets effectivePadding = MediaQuery.of(context).viewInsets + (insetPadding ?? EdgeInsets.zero);
+    final DialogTheme defaults = theme.useMaterial3
+      ? (_fullscreen ? _DialogFullscreenDefaultsM3(context) : _DialogDefaultsM3(context))
+      : _DialogDefaultsM2(context);
+
+    Widget dialogChild;
+
+    if (_fullscreen) {
+      dialogChild = Material(
+        color: backgroundColor ?? dialogTheme.backgroundColor ?? defaults.backgroundColor,
+        child: child,
+      );
+    } else {
+      dialogChild = Align(
+        alignment: alignment ?? dialogTheme.alignment ?? defaults.alignment!,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minWidth: 280.0),
+          child: Material(
+            color: backgroundColor ?? dialogTheme.backgroundColor ?? Theme.of(context).dialogBackgroundColor,
+            elevation: elevation ?? dialogTheme.elevation ?? defaults.elevation!,
+            shadowColor: shadowColor ?? dialogTheme.shadowColor ?? defaults.shadowColor,
+            surfaceTintColor: surfaceTintColor ?? dialogTheme.surfaceTintColor ?? defaults.surfaceTintColor,
+            shape: shape ?? dialogTheme.shape ?? defaults.shape!,
+            type: MaterialType.card,
+            clipBehavior: clipBehavior,
+            child: child,
+          ),
+        ),
+      );
+    }
+
     return AnimatedPadding(
       padding: effectivePadding,
       duration: insetAnimationDuration,
@@ -191,22 +258,7 @@ class Dialog extends StatelessWidget {
         removeRight: true,
         removeBottom: true,
         context: context,
-        child: Align(
-          alignment: alignment ?? dialogTheme.alignment ?? defaults.alignment!,
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minWidth: 280.0),
-            child: Material(
-              color: backgroundColor ?? dialogTheme.backgroundColor ?? Theme.of(context).dialogBackgroundColor,
-              elevation: elevation ?? dialogTheme.elevation ?? defaults.elevation!,
-              shadowColor: shadowColor ?? dialogTheme.shadowColor ?? defaults.shadowColor,
-              surfaceTintColor: surfaceTintColor ?? dialogTheme.surfaceTintColor ?? defaults.surfaceTintColor,
-              shape: shape ?? dialogTheme.shape ?? defaults.shape!,
-              type: MaterialType.card,
-              clipBehavior: clipBehavior,
-              child: child,
-            ),
-          ),
-        ),
+        child: dialogChild,
       ),
     );
   }
@@ -215,7 +267,7 @@ class Dialog extends StatelessWidget {
 /// A Material Design alert dialog.
 ///
 /// An alert dialog (also known as a basic dialog) informs the user about
-/// situations that require acknowledgement. An alert dialog has an optional
+/// situations that require acknowledgment. An alert dialog has an optional
 /// title and an optional list of actions. The title is displayed above the
 /// content and the actions are displayed below the content.
 ///
@@ -381,7 +433,7 @@ class AlertDialog extends StatelessWidget {
   /// Style for the text in the [title] of this [AlertDialog].
   ///
   /// If null, [DialogTheme.titleTextStyle] is used. If that's null, defaults to
-  /// [TextTheme.headline6] of [ThemeData.textTheme].
+  /// [TextTheme.titleLarge] of [ThemeData.textTheme].
   final TextStyle? titleTextStyle;
 
   /// The (optional) content of the dialog is displayed in the center of the
@@ -410,7 +462,7 @@ class AlertDialog extends StatelessWidget {
   /// Style for the text in the [content] of this [AlertDialog].
   ///
   /// If null, [DialogTheme.contentTextStyle] is used. If that's null, defaults
-  /// to [TextTheme.subtitle1] of [ThemeData.textTheme].
+  /// to [TextTheme.titleMedium] of [ThemeData.textTheme].
   final TextStyle? contentTextStyle;
 
   /// The (optional) set of actions that are displayed at the bottom of the
@@ -944,7 +996,7 @@ class SimpleDialog extends StatelessWidget {
   /// Style for the text in the [title] of this [SimpleDialog].
   ///
   /// If null, [DialogTheme.titleTextStyle] is used. If that's null, defaults to
-  /// [TextTheme.headline6] of [ThemeData.textTheme].
+  /// [TextTheme.titleLarge] of [ThemeData.textTheme].
   final TextStyle? titleTextStyle;
 
   /// The (optional) content of the dialog is displayed in a
@@ -983,7 +1035,7 @@ class SimpleDialog extends StatelessWidget {
   /// announce screen transitions when the dialog is opened and closed.
   ///
   /// If this label is not provided, a semantic label will be inferred from the
-  /// [title] if it is not null.  If there is no title, the label will be taken
+  /// [title] if it is not null. If there is no title, the label will be taken
   /// from [MaterialLocalizations.dialogLabel].
   ///
   /// See also:
@@ -1037,7 +1089,7 @@ class SimpleDialog extends StatelessWidget {
           bottom: children == null ? effectiveTitlePadding.bottom * paddingScaleFactor : effectiveTitlePadding.bottom,
         ),
         child: DefaultTextStyle(
-          style: titleTextStyle ?? DialogTheme.of(context).titleTextStyle ?? theme.textTheme.headline6!,
+          style: titleTextStyle ?? DialogTheme.of(context).titleTextStyle ?? theme.textTheme.titleLarge!,
           child: Semantics(
             // For iOS platform, the focus always lands on the title.
             // Set nameRoute to false to avoid title being announce twice.
@@ -1120,7 +1172,7 @@ Widget _buildMaterialDialogTransitions(BuildContext context, Animation<double> a
 /// This function takes a `builder` which typically builds a [Dialog] widget.
 /// Content below the dialog is dimmed with a [ModalBarrier]. The widget
 /// returned by the `builder` does not share a context with the location that
-/// `showDialog` is originally called from. Use a [StatefulBuilder] or a
+/// [showDialog] is originally called from. Use a [StatefulBuilder] or a
 /// custom [StatefulWidget] if the dialog needs to update dynamically.
 ///
 /// The `context` argument is used to look up the [Navigator] and [Theme] for
@@ -1363,10 +1415,10 @@ class _DialogDefaultsM2 extends DialogTheme {
   Color? get shadowColor => Theme.of(context).shadowColor;
 
   @override
-  TextStyle? get titleTextStyle => _textTheme.headline6;
+  TextStyle? get titleTextStyle => _textTheme.titleLarge;
 
   @override
-  TextStyle? get contentTextStyle => _textTheme.subtitle1;
+  TextStyle? get contentTextStyle => _textTheme.titleMedium;
 
   @override
   EdgeInsetsGeometry? get actionsPadding => EdgeInsets.zero;
@@ -1379,14 +1431,14 @@ class _DialogDefaultsM2 extends DialogTheme {
 // Design token database by the script:
 //   dev/tools/gen_defaults/bin/gen_defaults.dart.
 
-// Token database version: v0_101
+// Token database version: v0_132
 
 class _DialogDefaultsM3 extends DialogTheme {
   _DialogDefaultsM3(this.context)
     : super(
         alignment: Alignment.center,
         elevation: 6.0,
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.only(topLeft: Radius.circular(28.0), topRight: Radius.circular(28.0), bottomLeft: Radius.circular(28.0), bottomRight: Radius.circular(28.0))),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.all(Radius.circular(28.0))),
       );
 
   final BuildContext context;
@@ -1398,6 +1450,9 @@ class _DialogDefaultsM3 extends DialogTheme {
 
   @override
   Color? get backgroundColor => _colors.surface;
+
+  @override
+  Color? get shadowColor => Colors.transparent;
 
   @override
   Color? get surfaceTintColor => _colors.surfaceTint;
@@ -1413,3 +1468,23 @@ class _DialogDefaultsM3 extends DialogTheme {
 }
 
 // END GENERATED TOKEN PROPERTIES - Dialog
+
+// BEGIN GENERATED TOKEN PROPERTIES - DialogFullscreen
+
+// Do not edit by hand. The code between the "BEGIN GENERATED" and
+// "END GENERATED" comments are generated from data in the Material
+// Design token database by the script:
+//   dev/tools/gen_defaults/bin/gen_defaults.dart.
+
+// Token database version: v0_132
+
+class _DialogFullscreenDefaultsM3 extends DialogTheme {
+  const _DialogFullscreenDefaultsM3(this.context);
+
+  final BuildContext context;
+
+  @override
+  Color? get backgroundColor => Theme.of(context).colorScheme.surface;
+}
+
+// END GENERATED TOKEN PROPERTIES - DialogFullscreen
