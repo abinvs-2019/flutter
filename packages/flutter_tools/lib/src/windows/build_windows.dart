@@ -90,7 +90,7 @@ Future<void> buildWindows(WindowsProject windowsProject, BuildInfo buildInfo, {
     }
     await _runBuild(cmakePath, buildDirectory, buildModeName);
   } finally {
-    status.cancel();
+    status.stop();
   }
   if (buildInfo.codeSizeDirectory != null && sizeAnalyzer != null) {
     final String arch = getNameForTargetPlatform(TargetPlatform.windows_x64);
@@ -121,8 +121,7 @@ Future<void> buildWindows(WindowsProject windowsProject, BuildInfo buildInfo, {
     final String relativeAppSizePath = outputFile.path.split('.flutter-devtools/').last.trim();
     globals.printStatus(
       '\nTo analyze your app size in Dart DevTools, run the following command:\n'
-      'flutter pub global activate devtools; flutter pub global run devtools '
-      '--appSizeBase=$relativeAppSizePath'
+      'dart devtools --appSizeBase=$relativeAppSizePath'
     );
   }
 }
@@ -215,11 +214,11 @@ void _writeGeneratedFlutterConfig(
       'FLUTTER_TARGET': target,
     ...buildInfo.toEnvironmentConfig(),
   };
-  final Artifacts artifacts = globals.artifacts!;
-  if (artifacts is LocalEngineArtifacts) {
-    final String engineOutPath = artifacts.engineOutPath;
+  final LocalEngineInfo? localEngineInfo = globals.artifacts?.localEngineInfo;
+  if (localEngineInfo != null) {
+    final String engineOutPath = localEngineInfo.engineOutPath;
     environment['FLUTTER_ENGINE'] = globals.fs.path.dirname(globals.fs.path.dirname(engineOutPath));
-    environment['LOCAL_ENGINE'] = artifacts.localEngineName;
+    environment['LOCAL_ENGINE'] = localEngineInfo.localEngineName;
   }
   writeGeneratedCmakeConfig(Cache.flutterRoot!, windowsProject, buildInfo, environment);
 }
